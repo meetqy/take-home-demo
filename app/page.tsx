@@ -22,8 +22,8 @@ export default function Home() {
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center p-24 gap-8">
-      <div className="border-border border max-w-screen-sm h-96 w-full p-4 text-lg">
+    <main className="flex min-h-screen flex-col items-center lg:p-24 p-4 gap-8">
+      <div className="border-border border max-w-screen-sm h-96 w-full p-4 text-lg rounded">
         {text}
       </div>
       <MicrophoneToggle onChange={onChange} disabled={disabled} />
