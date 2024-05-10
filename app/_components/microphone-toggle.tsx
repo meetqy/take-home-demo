@@ -24,28 +24,23 @@ const CloseIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-const getMediaRecord = async () => {
-  // https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      audio: true,
-    });
-
-    return new MediaRecorder(stream);
-  } catch (err) {
-    console.log(err);
-  }
-};
-
-export const MicrophoneToggle = () => {
+export const MicrophoneToggle = ({
+  onChange,
+  disabled,
+}: {
+  disabled?: boolean;
+  onChange?: (e: Blob) => void;
+}) => {
   const [pressed, setPressed] = useState(false);
   const [record, setRecord] = useState<MediaRecorder | null>(null);
-
-  const onPressedChange = () => setPressed((prev) => !prev);
+  const onPressedChange = () => {
+    if (disabled) return;
+    setPressed((prev) => !prev);
+  };
 
   useEffect(() => {
     (async () => {
-      let recordedBlob: Blob;
+      let blob: Blob;
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: true,
       });
@@ -54,21 +49,12 @@ export const MicrophoneToggle = () => {
 
       record.ondataavailable = async (e) => {
         if (e.data && e.data.size > 0) {
-          recordedBlob = e.data;
+          blob = e.data;
         }
       };
 
       record.onstop = () => {
-        const formData = new FormData();
-        formData.append("file", recordedBlob);
-
-        fetch("/api/transcribe", {
-          method: "post",
-          body: formData,
-        }).then(async (res) => {
-          const json = await res.json();
-          console.log(json);
-        });
+        onChange?.(blob);
       };
 
       record.onstart = () => {
@@ -88,6 +74,7 @@ export const MicrophoneToggle = () => {
     <Toggle
       pressed={pressed}
       onPressedChange={onPressedChange}
+      disabled={disabled}
       className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
       size={"lg"}
     >
