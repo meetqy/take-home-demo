@@ -45,26 +45,39 @@ export const MicrophoneToggle = () => {
 
   useEffect(() => {
     (async () => {
-      const record = await getMediaRecord();
+      let recordedBlob: Blob;
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+      });
 
-      if (record) {
-        setRecord(record);
+      const record = new MediaRecorder(stream);
 
-        record.ondataavailable = (e) => {
-          const blob = new Blob([e.data], { type: "audio/wav" });
-          const url = URL.createObjectURL(blob);
-          console.log(url);
-        };
+      record.ondataavailable = async (e) => {
+        if (e.data && e.data.size > 0) {
+          recordedBlob = e.data;
+        }
+      };
 
-        record.onstop = () => {
-          record.stream.getTracks().forEach((track) => track.stop());
-        };
+      record.onstop = () => {
+        const formData = new FormData();
+        formData.append("file", recordedBlob);
 
-        record.onstart = () => {
-          console.log("recording started");
-        };
-      }
+        fetch("/api/transcribe", {
+          method: "post",
+          body: formData,
+        }).then(async (res) => {
+          const json = await res.json();
+          console.log(json);
+        });
+      };
+
+      record.onstart = () => {
+        console.log("recording started");
+      };
+
+      setRecord(record);
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
